@@ -1,0 +1,18 @@
+Testing: test123@gmail.com
+  Valid Email
+
+Testing: admin.test@domain.om
+  Valid Email
+
+Testing: gov_user@agency.gov
+  Valid Email
+
+Testing: user-name123@hotmail
+  Valid Email
+
+Testing: usergmail.com
+  Error: Email must be in the format avcf2@gmail.com, avcf2@gmail.om, avcf2@gmail.gov, or avcf2@gmail.hotmail
+
+Testing: user@.com
+  Error: Email must be in the format avcf2@gmail.com, avcf2@gmail.om, avcf2@gmail.gov, or avcf2@gmail.hotmail
+
