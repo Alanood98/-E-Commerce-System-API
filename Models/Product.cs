@@ -22,8 +22,9 @@ namespace E_CommerceSystem.Models
         public int Stock { get; set; }
         [Required]
         public decimal OverallRating { get; set; } = 5;
-
+        [JsonIgnore]
         public ICollection<Review> Reviews { get; set; }
+        [JsonIgnore]
         public ICollection<OrderProduct> OrderProducts { get; set; }
     }
 }
