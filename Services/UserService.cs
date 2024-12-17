@@ -2,10 +2,12 @@
 using System.Linq;
 using E_CommerceSystem.Models;
 using E_CommerceSystem.Repositories;
+using BCrypt.Net;
+
 
 namespace E_CommerceSystem.Services
 {
-    public class UserService
+    public class UserService : IUserService
     {
         private readonly IUserRepo _userRepo;
         private readonly ApplicationDbContext _context;
@@ -15,15 +17,11 @@ namespace E_CommerceSystem.Services
             _userRepo = userRepo;
             _context = context;
         }
+        //==================================================================================================
 
         // Add a new user (admin only)
-        public void AddNewUser(User currentUser, User newUser)
+        public void AddUser(User newUser)
         {
-            if (currentUser.role != "Admin")
-            {
-                throw new UnauthorizedAccessException("Only admins can add new users.");
-            }
-
             if (_context.Users.Any(u => u.UEmail == newUser.UEmail))
             {
                 throw new InvalidOperationException("A user with this email already exists.");
@@ -32,6 +30,9 @@ namespace E_CommerceSystem.Services
             newUser.UPassword = HashPassword(newUser.UPassword);
             _userRepo.AddUser(newUser);
         }
+
+
+        //==============================================================================================
 
         // Delete a user (admin only)
         public void DeleteUser(User currentUser, int userId)
@@ -50,116 +51,195 @@ namespace E_CommerceSystem.Services
             _context.Users.Remove(userToDelete);
             _context.SaveChanges();
         }
+        //============================================================================================
+        public User GetUser(string email, string password)
+        {
+            return _userRepo.GetUSer(email, password);
+
+        }
+
+
+
+        //========================================================================================
 
         // Add a new product (admin only)
-        public void AddNewProduct(User currentUser, Product product)
-        {
-            if (currentUser.role != "Admin")
-            {
-                throw new UnauthorizedAccessException("Only admins can add new products.");
-            }
+        //public void AddNewProduct(User currentUser, Product product)
+        //{
+        //    if (currentUser.role != "Admin")
+        //    {
+        //        throw new UnauthorizedAccessException("Only admins can add new products.");
+        //    }
 
-            _context.Products.Add(product);
-            _context.SaveChanges();
-        }
+        //    _context.Products.Add(product);
+        //    _context.SaveChanges();
+        //}
 
-        // Delete a product (admin only)
-        public void DeleteProduct(User currentUser, int productId)
-        {
-            if (currentUser.role != "Admin")
-            {
-                throw new UnauthorizedAccessException("Only admins can delete products.");
-            }
+        ////=====================================================================================
 
-            var productToDelete = _context.Products.FirstOrDefault(p => p.Id == productId);
-            if (productToDelete == null)
-            {
-                throw new InvalidOperationException("Product not found.");
-            }
+        //// Delete a product (admin only)
+        //public void DeleteProduct(User currentUser, int productId)
+        //{
+        //    if (currentUser.role != "Admin")
+        //    {
+        //        throw new UnauthorizedAccessException("Only admins can delete products.");
+        //    }
 
-            _context.Products.Remove(productToDelete);
-            _context.SaveChanges();
-        }
+        //    var productToDelete = _context.Products.FirstOrDefault(p => p.ProductId == productId);
+        //    if (productToDelete == null)
+        //    {
+        //        throw new InvalidOperationException("Product not found.");
+        //    }
 
-        // Update product details (admin only)
-        public void UpdateProduct(User currentUser, Product product)
-        {
-            if (currentUser.role != "Admin")
-            {
-                throw new UnauthorizedAccessException("Only admins can update products.");
-            }
+        //    _context.Products.Remove(productToDelete);
+        //    _context.SaveChanges();
+        //}
+        ////===============================================================================
 
-            var existingProduct = _context.Products.FirstOrDefault(p => p.Id == product.Id);
-            if (existingProduct == null)
-            {
-                throw new InvalidOperationException("Product not found.");
-            }
+        //// Update product details (admin only)
+        //public void UpdateProduct(User currentUser, Product product)
+        //{
+        //    if (currentUser.role != "Admin")
+        //    {
+        //        throw new UnauthorizedAccessException("Only admins can update products.");
+        //    }
 
-            existingProduct.Name = product.Name;
-            existingProduct.Price = product.Price;
-            existingProduct.Stock = product.Stock;
+        //    var existingProduct = _context.Products.FirstOrDefault(p => p.ProductId == product.ProductId);
+        //    if (existingProduct == null)
+        //    {
+        //        throw new InvalidOperationException("Product not found.");
+        //    }
 
-            _context.SaveChanges();
-        }
+        //    existingProduct.ProductName = product.ProductName;
+        //    existingProduct.ProductPrice = product.ProductPrice;
+        //    existingProduct.Stock = product.Stock;
 
-        // User review functionality (users only, one review per product)
-        public void AddReview(User currentUser, int productId, int rating, string comment)
-        {
-            if (currentUser.role != "User")
-            {
-                throw new UnauthorizedAccessException("Only users can add reviews.");
-            }
+        //    _context.SaveChanges();
+        //}
+        ////=========================================================================================
 
-            // Ensure the user has purchased the product
-            var userOrders = _context.Orders.Where(o => o.UserId == currentUser.UId).SelectMany(o => o.OrderProducts).ToList();
-            if (!userOrders.Any(op => op.ProductId == productId))
-            {
-                throw new InvalidOperationException("You can only review products you have purchased.");
-            }
+        //// User review functionality (users only, one review per product)
+        //public void AddReview(User currentUser, int productId, int rating, string comment)
+        //{
+        //    if (currentUser.role != "User")
+        //    {
+        //        throw new UnauthorizedAccessException("Only users can add reviews.");
+        //    }
 
-            // Check if the user has already reviewed the product
-            if (_context.Reviews.Any(r => r.UId == currentUser.UId && r.ProductId == productId))
-            {
-                throw new InvalidOperationException("You have already reviewed this product.");
-            }
+        //    // Ensure the user has purchased the product
+        //    var userOrders = _context.Orders.Where(o => o.UId == currentUser.UId).SelectMany(o => o.OrderProducts).ToList();
+        //    if (!userOrders.Any(op => op.ProductId == productId))
+        //    {
+        //        throw new InvalidOperationException("You can only review products you have purchased.");
+        //    }
 
-            // Add the review
-            var review = new Review
-            {
-                UId = currentUser.UId,
-                ProductId = productId,
-                Rating = rating,
-                Comment = comment,
-                ReviewDate = DateTime.Now
-            };
+        //    // Check if the user has already reviewed the product
+        //    if (_context.Reviews.Any(r => r.UId == currentUser.UId && r.ProductId == productId))
+        //    {
+        //        throw new InvalidOperationException("You have already reviewed this product.");
+        //    }
 
-            _context.Reviews.Add(review);
-            _context.SaveChanges();
-        }
+        //    // Add the review
+        //    var review = new Review
+        //    {
+        //        UId = currentUser.UId,
+        //        ProductId = productId,
+        //        Rating = rating,
+        //        Comment = comment,
+        //        ReviewDate = DateTime.Now
+        //    };
+
+        //    _context.Reviews.Add(review);
+        //    _context.SaveChanges();
+        //}
+        ////================================================================================================
 
         // Return product (users only)
         public void ReturnProduct(User currentUser, int productId)
         {
-            if (currentUser.role != "User")
+            if (currentUser == null || currentUser.role != "User")
             {
                 throw new UnauthorizedAccessException("Only users can return products.");
             }
 
-            // Logic for returning a product (e.g., restocking inventory, updating order status).
-            var orderProduct = _context.OrderProducts.FirstOrDefault(op => op.ProductId == productId && op.Order.UserId == currentUser.UId);
+            // Find the user's order that contains the product
+            var orderProduct = _context.OrderProducts
+                .FirstOrDefault(op => op.ProductId == productId && op.order.UId == currentUser.UId);
+
             if (orderProduct == null)
             {
                 throw new InvalidOperationException("You cannot return a product you have not purchased.");
             }
 
-            orderProduct.Quantity--;
+            // Increase product stock and update quantity in the order
+            var product = _context.Products.First(p => p.ProductId == productId);
+            product.Stock += orderProduct.Quantity;
+
+            // Remove the product from the order
+            _context.OrderProducts.Remove(orderProduct);
             _context.SaveChanges();
         }
+        ////============================================================================================
 
         // Hash a password securely
+
         private string HashPassword(string password)
         {
             return BCrypt.Net.BCrypt.HashPassword(password);
+        }
+
+
+        //=======================================================================================
+        // MakeOrder method
+        public void MakeOrder(User currentUser, Order orderDetails = null)
+        {
+            if (currentUser == null || currentUser.role != "User")
+            {
+                throw new UnauthorizedAccessException("Only registered users can make orders.");
+            }
+
+            // Ensure there are items in the order
+            if (orderDetails == null || orderDetails.OrderProducts == null || !orderDetails.OrderProducts.Any())
+            {
+                throw new InvalidOperationException("Order must contain at least one product.");
+            }
+
+            // Verify all products exist and have sufficient stock
+            foreach (var orderProduct in orderDetails.OrderProducts)
+            {
+                var product = _context.Products.FirstOrDefault(p => p.ProductId == orderProduct.ProductId);
+                if (product == null)
+                {
+                    throw new InvalidOperationException($"Product with ID {orderProduct.ProductId} does not exist. Order canceled.");
+                }
+                if (product.Stock < orderProduct.Quantity)
+                {
+                    throw new InvalidOperationException($"Insufficient stock for product {product.ProductName}. Order canceled.");
+                }
+            }
+
+            // All checks passed: Proceed to create the order and update stock
+            foreach (var orderProduct in orderDetails.OrderProducts)
+            {
+                var product = _context.Products.First(p => p.ProductId == orderProduct.ProductId);
+                product.Stock -= orderProduct.Quantity; // Decrease stock
+            }
+
+            // Calculate total amount
+            decimal totalAmount = orderDetails.OrderProducts.Sum(op =>
+                _context.Products.First(p => p.ProductId == op.ProductId).ProductPrice * op.Quantity);
+
+            // Create a new order
+            var order = new Order
+            {
+                UId = currentUser.UId,
+                OrderDate = DateTime.Now,
+                TotalAmount = totalAmount,
+                OrderProducts = orderDetails.OrderProducts
+            };
+
+            // Save order to database
+            _context.Orders.Add(order);
+            _context.SaveChanges();
         }
     }
 }

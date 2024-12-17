@@ -38,8 +38,9 @@ namespace E_CommerceSystem.Models
   
         [Required]
         public string role { get; set; }
-
+        [JsonIgnore]
         public ICollection<Order> Orders { get; set; }
+        [JsonIgnore]
         public ICollection<Review> Reviews { get; set; }
 
     }
