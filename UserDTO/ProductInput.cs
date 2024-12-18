@@ -6,7 +6,7 @@
         public string ProductDescription { get; set; }
         public decimal ProductPrice { get; set; }
         public int Stock { get; set; }
-        public string UPhone { get; set; }
-        public string Role { get; set; }
+        
+       
     }
 }

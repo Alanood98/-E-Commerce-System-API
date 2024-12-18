@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -25,92 +24,141 @@ namespace E_CommerceSystem.Controllers
             _userService = userService;
             _configuration = configuration;
         }
-
+        // Register a new user
+        [HttpPost("register")]
         [AllowAnonymous]
-        [HttpPost("add")]
-        public IActionResult AddUser([FromBody] UserInput newUserInput)
+        public IActionResult RegisterUser([FromBody] UserInput userInput)
         {
             try
             {
-                var newUser = new User
+                if (!ModelState.IsValid)
                 {
-                    UName = newUserInput.UName,
-                    UEmail = newUserInput.UEmail,
-                    UPassword = newUserInput.UPassword,
-                    CreatedAt = newUserInput.CreatedAt,
-                    UPhone = newUserInput.UPhone,
-                    role = newUserInput.Role
+                    return BadRequest(ModelState);
+                }
+
+                var user = new User
+                {
+                    UName = userInput.UName,
+                    UEmail = userInput.UEmail,
+                    UPassword = userInput.UPassword,
+                    CreatedAt = DateTime.UtcNow,
+                    UPhone = userInput.UPhone,
+                    role = userInput.Role
                 };
 
-                _userService.AddUser(newUser);
-                return Ok(new { UserId = newUser.UId, Message = "User added successfully." });
+                _userService.RegisterUser(user);
+                return Ok(new { Message = "User registered successfully." });
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new { Error = ex.Message });
             }
         }
-
-
 
 
 
         [AllowAnonymous]
-        [HttpGet("login")]
-        public IActionResult Login(string email, string password)
+        [HttpPost("login")]
+        public IActionResult Login([FromBody] LoginInputcs loginInput)
         {
-            var user = _userService.GetUser(email, password);
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
 
-            if (user != null)
-            {
-                string token = GenerateJwtToken(user.UId.ToString(), user.UName);
-                return Ok(new { Token = token, Message = "Login successful." });
+                var user = _userService.Login(loginInput.UEmail, loginInput.UPassword);
+                if (user == null)
+                {
+                    return Unauthorized(new { Message = "Invalid credentials." });
+                }
+
+                // Generate JWT token
+                string token = GenerateJwtToken(user.UId.ToString(), user.UName, user.role);
+
+                return Ok(new
+                {
+                    Token = token,
+                    Role = user.role,
+                    Message = "Login successful."
+                });
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest("Invalid Credentials");
+                return BadRequest(new { Error = ex.Message });
             }
         }
 
+
+
+
+
         [NonAction]
-        public string GenerateJwtToken(string userId, string username)
+        public string GenerateJwtToken(string userId, string username, string role)
         {
             var jwtSettings = _configuration.GetSection("JwtSettings");
             var secretKey = jwtSettings["SecretKey"];
 
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, userId),
-                new Claim(JwtRegisteredClaimNames.UniqueName, username),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
+        new Claim(ClaimTypes.NameIdentifier, userId),
+        new Claim(ClaimTypes.Name, username),
+        new Claim(ClaimTypes.Role, role)
+    };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(Convert.ToDouble(jwtSettings["ExpiryInMinutes"])),
-                signingCredentials: creds
-            );
+                expires: DateTime.UtcNow.AddMinutes(30),
+                signingCredentials: creds);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        [HttpPost("makeorder")]
-        public IActionResult MakeOrder([FromBody] Order order)
+
+
+        [HttpGet("details")]
+        public IActionResult GetUserDetails()
         {
-            var currentUser = HttpContext.Items["User"] as User;
-            _userService.MakeOrder(currentUser, order);
-            return Ok(new { Message = "Order created successfully." });
+            try
+            {
+                // Extract userId and other claims from the token
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim))
+                {
+                    return Unauthorized(new { Message = "User ID not found in token." });
+                }
+
+                int userId = int.Parse(userIdClaim);
+
+                // Fetch user details using the service
+                var user = _userService.GetUserById(userId);
+                if (user == null)
+                {
+                    return NotFound(new { Message = "User not found." });
+                }
+
+                // Prepare the response DTO
+                var userDetails = new UserDetailsDto
+                {
+                    UId = user.UId,
+                    UName = user.UName,
+                    UEmail = user.UEmail,
+                    UPhone = user.UPhone,
+                    role = user.role
+                };
+
+                return Ok(userDetails);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Error = ex.Message });
+            }
         }
 
-        [HttpPost("returnproduct/{productId}")]
-        public IActionResult ReturnProduct(int productId)
-        {
-            var currentUser = HttpContext.Items["User"] as User;
-            _userService.ReturnProduct(currentUser, productId);
-            return Ok(new { Message = "Product returned successfully." });
-        }
+
     }
 }

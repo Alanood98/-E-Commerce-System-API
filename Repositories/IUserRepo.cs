@@ -5,9 +5,13 @@ namespace E_CommerceSystem.Repositories
     public interface IUserRepo
     {
         void AddUser(User user);
-        User GetUSer(string email, string password);
-        User UpdateUser(User user);
-        User DeleteUser(User user);
+        User GetUserById(int id);
+        IEnumerable<User> GetAllUsers();
+        public User GetUSer(string email, string password);
+        public User GetUSerByEmail(string email);
+
+
+
 
     }
 }

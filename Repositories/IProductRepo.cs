@@ -4,11 +4,11 @@ namespace E_CommerceSystem.Repositories
 {
     public interface IProductRepo
     {
-        IEnumerable<Product> GetAllProducts(int pageNumber, int pageSize);
-       
-        Product AddProduct(Product product);
-        Product UpdateProduct(Product product);
-       
+        void AddProduct(Product product);
+        Product GetProductById(int id);
+        IEnumerable<Product> GetAllProducts();
+        void UpdateProduct(Product product);
+
 
     }
 }

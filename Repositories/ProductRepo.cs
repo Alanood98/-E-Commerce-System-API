@@ -19,58 +19,22 @@ namespace E_CommerceSystem.Repositories
             _context = context;
         }
 
-        public IEnumerable<Product> GetAllProducts(int pageNumber, int pageSize)
+        public void AddProduct(Product product)
         {
-            try
-            {
-                return _context.Products
-                    
-                    .Skip((pageNumber - 1) * pageSize)
-                    .Take(pageSize)
-                    .ToList();
-            }
-            catch (Exception ex)
-            {
-
-                Console.WriteLine($"Error retrieving Product: {ex.Message}");
-                throw;
-            }
-
+            _context.Products.Add(product);
+            _context.SaveChanges();
         }
 
-       
+        public Product GetProductById(int id) => _context.Products.Find(id);
 
-        public Product AddProduct(Product product)
+        public IEnumerable<Product> GetAllProducts() => _context.Products.ToList();
+
+        public void UpdateProduct(Product product)
         {
-            try
-            {
-                _context.Products.Add(product);
-                _context.SaveChanges();
-                return product;
-            }
-            catch (Exception ex)
-            {
-                // Log the exception
-                Console.WriteLine($"Error adding new Product: {ex.Message}");
-                throw; // Rethrow the exception if necessary
-            }
-
+            _context.Products.Update(product);
+            _context.SaveChanges();
         }
-        public Product UpdateProduct(Product product)
-        {
-            try
-            {
-                _context.Products.Update(product);
-                _context.SaveChanges();
-                return product;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error updating Product with ID {product.ProductId}: {ex.Message}");
-                throw;
-            }
-        }
-        
-
     }
+
+
 }

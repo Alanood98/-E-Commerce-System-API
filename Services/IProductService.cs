@@ -1,10 +1,11 @@
 ﻿using E_CommerceSystem.Models;
+using System.Security.Claims;
 
 public interface IProductService
 {
-    List<Product> GetAllProducts(int pageNumber, int pageSize);
-   
-    Product AddProduct(Product product);
-    Product UpdateProduct(Product product);
-    
+    void AddProduct(Product product, ClaimsPrincipal user);
+    void UpdateProduct(Product product);
+    Product GetProductById(int id);
+    IEnumerable<Product> GetProducts(string name, decimal? minPrice, decimal? maxPrice, int page, int pageSize);
+
 }

@@ -28,34 +28,27 @@ namespace E_CommerceSystem.Repositories
             return _context.Users.Where(u => u.UEmail == email & u.UPassword == password).FirstOrDefault();
         }
 
-        public User UpdateUser(User user)
+        public User GetUserById(int userId)
         {
             try
             {
-                _context.Users.Update(user);
-                _context.SaveChanges();
-                return user;
+                return _context.Users.FirstOrDefault(a => a.UId == userId);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error updating the user: {ex.Message}");
-                throw;
+                // Log the exception
+                Console.WriteLine($"Error retrieving User with ID {userId}: {ex.Message}");
+                throw; // Rethrow the exception if necessary
             }
         }
-        public User DeleteUser(User user)
+
+        public IEnumerable<User> GetAllUsers() => _context.Users.ToList();
+
+        public User GetUSerByEmail(string email)
         {
-            try
-            {
-                _context.Users.Remove(user);
-                _context.SaveChanges();
-                return user;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error when deleting the user: {ex.Message}");
-                throw;
-            }
+            return _context.Users.FirstOrDefault(u => u.UEmail == email);
         }
+
 
     }
 }
