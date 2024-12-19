@@ -17,41 +17,39 @@ namespace E_CommerceSystem.Services
                 _productRepo = productRepo;
             }
 
-            public Order PlaceOrder(orderInput orderInput)
+            public void PlaceOrder(List<OrderItemInput> orderInputs, int userId)
             {
                 var totalAmount = 0m;
+                var orderProducts = new List<OrderProduct>();
 
-                // Validate stock and calculate total amount
-                foreach (var item in orderInput.OrderItems)
+                foreach (var orderInput in orderInputs)
                 {
-                   
-                    if (product.Stock < item.Quantity)
+                    var product = _productRepo.GetProductById(orderInput.ProductId);
+                    if (product == null || product.Stock < orderInput.Quantity)
                     {
-                        throw new InvalidOperationException($"Insufficient stock for product {product.ProductName}.");
+                        throw new InvalidOperationException($"Insufficient stock for product {orderInput.ProductId}.");
                     }
 
-                    totalAmount += product.ProductPrice * item.Quantity;
-
-                    // Reduce stock
-                    product.Stock -= item.Quantity;
+                    totalAmount += product.ProductPrice * orderInput.Quantity;
+                    product.Stock -= orderInput.Quantity;
                     _productRepo.UpdateProduct(product);
+
+                    orderProducts.Add(new OrderProduct
+                    {
+                        ProductId = product.ProductId,
+                        Quantity = orderInput.Quantity
+                    });
                 }
 
-                // Create and save the order
                 var order = new Order
                 {
-                    
+                    UId = userId,
                     OrderDate = DateTime.Now,
                     TotalAmount = totalAmount,
-                    OrderProducts = orderInput.OrderItems.Select(i => new OrderProduct
-                    {
-                        
-                        Quantity = i.Quantity
-                    }).ToList()
+                    OrderProducts = orderProducts
                 };
 
                 _orderRepo.PlaceOrder(order);
-                return order;
             }
 
 
@@ -66,6 +64,4 @@ namespace E_CommerceSystem.Services
             }
         }
     }
-
-
 }

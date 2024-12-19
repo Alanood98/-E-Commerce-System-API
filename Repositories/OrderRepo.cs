@@ -18,19 +18,35 @@ namespace E_CommerceSystem.Repositories
             _context.SaveChanges();
         }
 
+        //public IEnumerable<Order> GetAllOrder()
+        //{
+        //    try
+        //    {
+
+        //        return _context.Orders.ToList();
+        //    }
+        //    catch (Exception ex)
+        //    {
+
+        //        Console.WriteLine($"Error retrieving Orders: {ex.Message}");
+        //        throw;
+        //    }
+        //}
         public IEnumerable<Order> GetAllOrdersForUser(int userId)
         {
             return _context.Orders
+                .Include(o => o.OrderProducts)
+                   
                 .Where(o => o.UId == userId)
-                .Include(o => o.OrderProducts) 
                 .ToList();
         }
 
-
         public Order GetOrderById(int orderId)
         {
-            return _context.Orders.Find(orderId);
-              
+            return _context.Orders
+                .Include(o => o.OrderProducts)
+                   
+                .FirstOrDefault(o => o.OrderId == orderId);
         }
     }
 }

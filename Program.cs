@@ -6,6 +6,7 @@ using System.Text;
 using E_CommerceSystem.Models;
 using E_CommerceSystem.Repositories;
 using E_CommerceSystem.Services;
+using E_CommerceSystem.Services.E_CommerceSystem.Services;
 
 namespace E_CommerceSystem
 {
@@ -23,6 +24,8 @@ namespace E_CommerceSystem
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IProductRepo, ProductRepo>();
             builder.Services.AddScoped<IProductService, ProductService>();
+            builder.Services.AddScoped<IOrderRepo, OrderRepo>();
+            builder.Services.AddScoped<IOrderService, OrderService>();
 
             // Configure DbContext
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
