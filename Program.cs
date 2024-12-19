@@ -26,6 +26,8 @@ namespace E_CommerceSystem
             builder.Services.AddScoped<IProductService, ProductService>();
             builder.Services.AddScoped<IOrderRepo, OrderRepo>();
             builder.Services.AddScoped<IOrderService, OrderService>();
+            builder.Services.AddScoped<IReviewRepo, ReviewRepo>();
+            builder.Services.AddScoped<IReviewService, ReviewService>();
 
             // Configure DbContext
             builder.Services.AddDbContext<ApplicationDbContext>(options =>

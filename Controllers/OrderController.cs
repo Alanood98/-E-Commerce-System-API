@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using E_CommerceSystem.Models;
 using E_CommerceSystem.Services;
 using E_CommerceSystem.UserDTO;
+using E_CommerceSystem.Utils;
 
 namespace E_CommerceSystem.Controllers
 {
@@ -21,13 +22,16 @@ namespace E_CommerceSystem.Controllers
             _orderService = orderService;
         }
 
+
         [HttpPost]
-        public IActionResult PlaceOrder(orderInput orderInput)
+        [AllowAnonymous]
+        public IActionResult PlaceOrder([FromBody] List<OrderItemInput> orderInputs)
         {
             try
             {
-                var order = _orderService.PlaceOrder(orderInput);
-                return Ok(new { Message = "Order placed successfully.", OrderId = order.OrderId });
+                var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+                _orderService.PlaceOrder(orderInputs, userId);
+                return Ok(new { Message = "Orders placed successfully." });
             }
             catch (InvalidOperationException ex)
             {
@@ -39,9 +43,8 @@ namespace E_CommerceSystem.Controllers
             }
         }
 
-
-        // Get all orders for a user
         [HttpGet]
+
         public IActionResult GetAllOrdersForUser()
         {
             try
@@ -56,8 +59,10 @@ namespace E_CommerceSystem.Controllers
             }
         }
 
-        // Get order details by ID
+
+
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public IActionResult GetOrderById(int id)
         {
             try

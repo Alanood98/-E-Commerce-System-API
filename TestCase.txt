@@ -15,4 +15,10 @@ Testing: usergmail.com
 
 Testing: user@.com
   Error: Email must be in the format avcf2@gmail.com, avcf2@gmail.om, avcf2@gmail.gov, or avcf2@gmail.hotmail
+ placeOrder:
+[
+  { "productId": 1, "quantity": 1},
+  { "productId": 4, "quantity": 1},
+  { "productId": 5, "quantity": 1}
+]
 
